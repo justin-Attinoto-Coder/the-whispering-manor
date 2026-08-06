@@ -6,7 +6,8 @@ export function UI() {
 
       <div className="instructions">
         Click to lock mouse<br />
-        WASD to move · Mouse to look
+        WASD to move · Mouse to look<br />
+        <strong>Shift</strong> to sprint
       </div>
 
       <div className="crosshair" />

@@ -2,25 +2,34 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-function FlickeringCandle({ position, baseIntensity = 1.1 }: { position: [number, number, number], baseIntensity?: number }) {
+function FlickeringCandle({
+  position,
+  baseIntensity = 1.4,
+  color = '#ffb366'
+}: {
+  position: [number, number, number]
+  baseIntensity?: number
+  color?: string
+}) {
   const light = useRef<THREE.PointLight>(null!)
 
   useFrame(({ clock }) => {
     if (!light.current) return
     const t = clock.elapsedTime
-    const flicker = Math.sin(t * 7.3 + position[0]) * 0.15 +
-                    Math.sin(t * 13.1 + position[2]) * 0.08 +
-                    (Math.random() - 0.5) * 0.12
-    light.current.intensity = baseIntensity + flicker
+    const flicker =
+      Math.sin(t * 6.8 + position[0] * 2.1) * 0.18 +
+      Math.sin(t * 11.4 + position[2] * 1.7) * 0.11 +
+      (Math.random() - 0.5) * 0.14
+    light.current.intensity = Math.max(0.4, baseIntensity + flicker)
   })
 
   return (
     <pointLight
       ref={light}
       position={position}
-      color="#ffaa55"
+      color={color}
       intensity={baseIntensity}
-      distance={9}
+      distance={11}
       decay={2}
       castShadow
     />
@@ -29,38 +38,53 @@ function FlickeringCandle({ position, baseIntensity = 1.1 }: { position: [number
 
 export function Lighting() {
   const ambient = useRef<THREE.AmbientLight>(null!)
+  const flash = useRef(0)
 
   useFrame(() => {
-    // Occasional lightning flash
-    if (Math.random() < 0.004) {
-      if (ambient.current) ambient.current.intensity = 1.8
-      setTimeout(() => {
-        if (ambient.current) ambient.current.intensity = 0.08
-      }, 80 + Math.random() * 120)
+    // Occasional lightning
+    if (Math.random() < 0.0035) {
+      flash.current = 1.6
+    }
+    flash.current *= 0.86
+
+    if (ambient.current) {
+      ambient.current.intensity = 0.14 + flash.current
     }
   })
 
   return (
     <>
-      <ambientLight ref={ambient} intensity={0.08} color="#1a1520" />
+      <ambientLight ref={ambient} intensity={0.14} color="#1c1824" />
 
-      {/* Moonlight */}
+      {/* Cool moonlight through windows */}
       <directionalLight
-        position={[8, 18, -12]}
-        intensity={0.28}
-        color="#8ea8ff"
+        position={[10, 16, -8]}
+        intensity={0.45}
+        color="#9bb6ff"
         castShadow
         shadow-mapSize={[1024, 1024]}
       />
 
-      {/* Candles */}
-      <FlickeringCandle position={[-4.2, 2.1, 3.5]} />
-      <FlickeringCandle position={[4.2, 2.1, 3.5]} />
-      <FlickeringCandle position={[-3.8, 2.1, -4.5]} baseIntensity={0.9} />
-      <FlickeringCandle position={[3.8, 2.1, -4.5]} baseIntensity={0.9} />
-      <FlickeringCandle position={[0, 2.4, -9.5]} baseIntensity={1.3} />
-      <FlickeringCandle position={[-7.5, 2.0, 0]} baseIntensity={0.75} />
-      <FlickeringCandle position={[7.5, 2.0, 0]} baseIntensity={0.75} />
+      {/* Warm fill from far end */}
+      <pointLight
+        position={[0, 3.2, -16]}
+        color="#ff9955"
+        intensity={1.1}
+        distance={14}
+        decay={2}
+      />
+
+      {/* Candles throughout the house */}
+      <FlickeringCandle position={[-5.2, 2.15, 5.5]} baseIntensity={1.5} />
+      <FlickeringCandle position={[5.2, 2.15, 5.5]} baseIntensity={1.5} />
+      <FlickeringCandle position={[-4.8, 2.15, -2]} baseIntensity={1.2} />
+      <FlickeringCandle position={[4.8, 2.15, -2]} baseIntensity={1.2} />
+      <FlickeringCandle position={[-8.5, 2.0, 1]} baseIntensity={1.0} />
+      <FlickeringCandle position={[8.5, 2.0, 1]} baseIntensity={1.0} />
+      <FlickeringCandle position={[0, 2.5, -11]} baseIntensity={1.7} />
+      <FlickeringCandle position={[-6, 2.1, -12]} baseIntensity={0.95} />
+      <FlickeringCandle position={[6, 2.1, -12]} baseIntensity={0.95} />
+      <FlickeringCandle position={[0, 2.3, 10]} baseIntensity={1.3} />
     </>
   )
 }

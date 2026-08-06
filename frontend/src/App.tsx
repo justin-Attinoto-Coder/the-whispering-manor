@@ -13,12 +13,13 @@ export default function App() {
     <>
       <Canvas
         shadows
-        camera={{ fov: 70, near: 0.1, far: 80, position: [0, 1.7, 8] }}
+        camera={{ fov: 70, near: 0.1, far: 90, position: [0, 1.7, 9] }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
         dpr={[1, 1.5]}
       >
-        <color attach="background" args={['#07060a']} />
-        <fog attach="fog" args={['#0a0910', 4, 28]} />
+        <color attach="background" args={['#08070b']} />
+        {/* Slightly less aggressive fog so architecture reads better while staying dark */}
+        <fog attach="fog" args={['#0b0a10', 6, 32]} />
 
         <Suspense fallback={null}>
           <Lighting />

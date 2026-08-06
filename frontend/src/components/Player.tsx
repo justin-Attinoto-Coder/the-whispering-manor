@@ -7,7 +7,13 @@ export function Player() {
   const { camera } = useThree()
   const velocity = useRef(new THREE.Vector3())
   const direction = useRef(new THREE.Vector3())
-  const keys = useRef({ forward: false, backward: false, left: false, right: false })
+  const keys = useRef({
+    forward: false,
+    backward: false,
+    left: false,
+    right: false,
+    sprint: false
+  })
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -15,12 +21,14 @@ export function Player() {
       if (e.code === 'KeyS') keys.current.backward = true
       if (e.code === 'KeyA') keys.current.left = true
       if (e.code === 'KeyD') keys.current.right = true
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.current.sprint = true
     }
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === 'KeyW') keys.current.forward = false
       if (e.code === 'KeyS') keys.current.backward = false
       if (e.code === 'KeyA') keys.current.left = false
       if (e.code === 'KeyD') keys.current.right = false
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') keys.current.sprint = false
     }
     document.addEventListener('keydown', onKeyDown)
     document.addEventListener('keyup', onKeyUp)
@@ -31,7 +39,10 @@ export function Player() {
   }, [])
 
   useFrame((_, delta) => {
-    const speed = 4.2
+    const baseSpeed = 3.8
+    const sprintMultiplier = keys.current.sprint ? 1.85 : 1
+    const speed = baseSpeed * sprintMultiplier
+
     direction.current.set(0, 0, 0)
 
     if (keys.current.forward) direction.current.z -= 1
@@ -39,7 +50,9 @@ export function Player() {
     if (keys.current.left) direction.current.x -= 1
     if (keys.current.right) direction.current.x += 1
 
-    direction.current.normalize()
+    if (direction.current.lengthSq() > 0) {
+      direction.current.normalize()
+    }
 
     const front = new THREE.Vector3()
     camera.getWorldDirection(front)
@@ -49,16 +62,19 @@ export function Player() {
     const right = new THREE.Vector3()
     right.crossVectors(front, new THREE.Vector3(0, 1, 0)).normalize()
 
-    velocity.current.set(0, 0, 0)
-    velocity.current.addScaledVector(front, -direction.current.z * speed * delta)
-    velocity.current.addScaledVector(right, direction.current.x * speed * delta)
+    // Smooth acceleration / deceleration
+    const targetVelocity = new THREE.Vector3()
+    targetVelocity.addScaledVector(front, -direction.current.z * speed)
+    targetVelocity.addScaledVector(right, direction.current.x * speed)
 
-    camera.position.add(velocity.current)
+    velocity.current.lerp(targetVelocity, 1 - Math.exp(-12 * delta))
+
+    camera.position.addScaledVector(velocity.current, delta)
     camera.position.y = 1.7
 
-    // Simple bounds
-    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -11, 11)
-    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -14, 12)
+    // Soft bounds
+    camera.position.x = THREE.MathUtils.clamp(camera.position.x, -13.5, 13.5)
+    camera.position.z = THREE.MathUtils.clamp(camera.position.z, -18, 15)
   })
 
   return <PointerLockControls />
